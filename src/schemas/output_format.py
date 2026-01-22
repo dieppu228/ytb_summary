@@ -1,5 +1,8 @@
 from typing import List, Optional
 from pydantic import BaseModel, Field
+from typing import List, TypedDict
+
+
 
 # ==================================================
 # 0. Transcript Fetch Output
@@ -92,21 +95,37 @@ class SectionSummaryOutput(BaseModel):
     )
 
 
+# ==================================================
+# 3.5. Direct Summary (for short videos)
+# ==================================================
+
+class DirectSummaryOutput(BaseModel):
+    summary: str = Field(
+        ...,
+        description="Direct summary of the entire short video"
+    )
+
 
 # ==================================================
 # 4. Global Video Summary
 # ==================================================
+
+class SectionTakeaway(BaseModel):
+    section_id: int
+    title: str
+    start: float
+    end: float
+    takeaways: List[str]
 
 class GlobalSummaryOutput(BaseModel):
     global_summary: str = Field(
         ...,
         description="High-level summary of the entire video"
     )
-    key_takeaways: List[str] = Field(
+    section_takeaways: List[SectionTakeaway] = Field(
         ...,
-        description="Important insights extracted from the video"
+        description="Key takeaways grouped by corresponding sections."
     )
-
 
 # ==================================================
 # 5. Final Client Response (API Output)

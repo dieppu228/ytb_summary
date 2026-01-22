@@ -1,2 +1,4 @@
 # Project-specific
 Prompt_AI.md
+/src/audio_download/
+/src/audio_to_text/audio_download
