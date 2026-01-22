@@ -1,4 +1,12 @@
 # Project-specific
 Prompt_AI.md
-/src/audio_download/
-/src/audio_to_text/audio_download
+
+# Audio downloads (root + audio_to_text)
+src/audio_downloads/
+src/audio_to_text/audio_downloads/
+
+# Python cache
+__pycache__/
+*.pyc
+
+
