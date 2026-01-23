@@ -1,22 +1,36 @@
+# =====================
 # Project-specific
+# =====================
 Prompt_AI.md
+src/cur_prompt.md
 
-# Audio downloads (root + audio_to_text)
+# =====================
+# Audio downloads
+# =====================
 src/audio_downloads/
 src/audio_to_text/audio_downloads/
 
+# =====================
 # Python cache
+# =====================
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
 
+# =====================
 # Environment variables
+# =====================
 .env
 
-src/test_prompt.ipynb
-src/cur_prompt.md
-src/main_case2.ipynb
-src/main_case2.py
+# =====================
+# Jupyter / notebooks
+# =====================
+.ipynb_checkpoints/
+src/*.ipynb
+
+# =====================
+# Local run files
+# =====================
 src/main_case1.py
-src/main_case1.ipynb
-
-
+src/main_case2.py
