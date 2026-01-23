@@ -9,7 +9,7 @@ def run_short_flow(transcript: str, **kwargs):
     gemini = GeminiClient()
     
     # Extract optional parameters
-    video_language = kwargs.get("video_language", "English")
+    video_language = transcript
 
     # Generate direct summary
     prompt = build_direct_summary_prompt(

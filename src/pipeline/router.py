@@ -16,9 +16,9 @@ class VideoToTextNode:
 
     def run(self, video_id: str):
         fetch_result = self.fetcher.fetch(video_id)
-
         if fetch_result.ok:
-            return 
+            print(fetch_result.transcript["language"])
+            return fetch_result
 
         print(
             f"[VideoToTextNode] Fetch failed → fallback ASR "
@@ -35,30 +35,16 @@ class TranscriptRouter:
         self.threshold = threshold
 
     def route(self, transcript: str, **kwargs):
-        """
-        Decide which pipeline to run based on transcript token length
-        
-        Args:
-            transcript: The video transcript
-            **kwargs: Additional parameters (video_id, metadata, video_language, cost_tracker, etc)
-        
-        Returns:
-            Dictionary with:
-            - flow: "long" or "short"
-            - token_count: Number of tokens in transcript
-            - Other flow-specific results
-        """
-        token_count = estimate_tokens(transcript)
+        token_count = estimate_tokens(transcript.transcript["text"])
 
         if token_count > self.threshold:
             return run_long_flow(
-                transcript=transcript,
-                token_count=token_count,
-                **kwargs
+                transcript=transcript.transcript["text"],
+                language=transcript.transcript["language"],
+                video_duration=transcript.transcript["duration"]["seconds"],
             )
         else:
             return run_short_flow(
-                transcript=transcript,
-                token_count=token_count,
-                **kwargs
+                transcript=transcript.transcript["text"],
+                language=transcript.transcript["language"],
             )

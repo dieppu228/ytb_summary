@@ -11,7 +11,7 @@ from typing import List, TypedDict
 class TranscriptMeta(BaseModel):
     video_id: str
     language: str
-    language_code: str
+    language: str
     is_generated: bool
     is_translatable: bool
     translation_languages: List[str]

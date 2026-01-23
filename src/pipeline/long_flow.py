@@ -6,19 +6,18 @@ from llm.prompts import build_outline_prompt, build_section_summary_prompt, buil
 from schemas.output_format import OutlineOutput, SectionSummaryOutput, GlobalSummaryOutput
 import json
 
-def run_long_flow(transcript: str,language: str, **kwargs):
-    gemini = GeminiClient()
-    
-    # Extract optional parameters
-    video_language = kwargs.get("video_language", "English")
+def run_long_flow(transcript: str,language: str, video_duration: float = None, **kwargs):
 
     # ===== STEP 1: Generate outline =====
     video_transcript = transcript
-    video_language = language
-    prompt = build_outline_prompt(video_transcript=video_transcript)
+    prompt = build_outline_prompt(
+        video_transcript=transcript,
+        video_language=language,
+        video_duration=video_duration,
+    )
     gemini = GeminiClient()
     response = gemini.models.generate_content(
-        model="gemini-2.5-flash",
+        model="models/gemini-2.5-flash-lite",
         contents=prompt,
         config={
             "response_mime_type": "application/json",
@@ -28,9 +27,9 @@ def run_long_flow(transcript: str,language: str, **kwargs):
     outline = OutlineOutput.model_validate_json(response.text)
 
     # ===== STEP 2: Segment transcript according to outline =====
-    segmenter = TranscriptSegmenter(transcript)
+    segmenter = TranscriptSegmenter(video_transcript)
     outlined_sections = segmenter.segment_by_outline(outline.sections)
-
+    
     # ===== STEP 3: Summarize each section with memory =====
     memory = ""
     section_summaries = []
@@ -41,9 +40,8 @@ def run_long_flow(transcript: str,language: str, **kwargs):
         prompt = build_section_summary_prompt(
             section_text=section_text,
             memory=memory,
-            video_language=video_language
+            video_language=language
         )
-
         response = gemini.models.generate_content(
         model="models/gemini-2.5-flash-lite",
         contents=prompt,
@@ -76,10 +74,9 @@ def run_long_flow(transcript: str,language: str, **kwargs):
         indent=2,
         ensure_ascii=False
     )
-
     prompt = build_global_summary_prompt(
         section_summaries=section_summaries_text,
-        video_language=video_language   
+        video_language=language   
     )
     response = gemini.models.generate_content(
         model="models/gemini-2.5-flash-lite",

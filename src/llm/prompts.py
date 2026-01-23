@@ -7,55 +7,86 @@ Prompt templates for YouTube video summarization pipeline (CASE 1)
 # ==================================================
 
 OUTLINE_PROMPT = """
-You are an expert content analyst.
+You are an expert content analyst specializing in high-level video structure analysis.
 
-Given a YouTube transcript with timestamps, split the video into coherent topical sections.
+Video Language: {video_language}
+Video Duration: {video_duration} seconds (~{video_duration_minutes} minutes)
+
+Given a YouTube transcript with timestamps, identify only the MOST SIGNIFICANT topical sections.
 
 Transcript:
 {video_transcript}
 
-Rules:
-- Do NOT summarize content
-- Only detect topic boundaries where the subject matter clearly changes
-- ALL sections must be contiguous and ordered chronologically
-- Cover the ENTIRE video from start to end
-- Each section must include:
-  - section_id (integer, starting from 1)
-  - title (concise topic description)
-  - start (seconds, integer)
-  - end (seconds, integer)
-  - keywords (3-5 relevant strings)
+TARGET SECTION COUNT (strict guidelines):
+- Medium videos (10-30 min): 3-5 sections maximum  
+- Long videos (30-60 min): 4-7 sections maximum
+- Very long videos (60-120 min): 5-8 sections maximum
+- Extra long videos (>120 min): 6-10 sections maximum
 
-Return a JSON object with this exact structure:
+CORE PRINCIPLES:
+- Think "book chapters" not "article sections"
+- Each section should cover 10-20 minutes of content minimum (for long videos)
+- Only create a new section when there's a FUNDAMENTAL shift in topic/theme
+- Merge related discussions, examples, and sub-topics into unified sections
+- Prefer fewer, more comprehensive sections over many small ones
+- Avoid sections shorter than 5 minutes unless video is very short
+
+WHAT QUALIFIES AS A SECTION BOUNDARY:
+Major topic change (e.g., from theory to practice, problem to solution)
+Clear structural markers (intro → main content → conclusion)
+Significant shift in discussion focus or context
+
+WHAT DOES NOT QUALIFY:
+Brief tangents or examples within a broader discussion
+Minor sub-points or supporting arguments
+Q&A variations on the same core topic
+Transitional moments or recaps
+
+Each section must include:
+- section_id (integer, starting from 1)
+- title (broad, encompassing theme in {video_language})
+- start (seconds, integer)
+- end (seconds, integer)
+- keywords (3-5 core concepts in {video_language})
+
+Return a JSON object:
 {{
   "sections": [
     {{
       "section_id": 1,
-      "title": "Introduction",
+      "title": "Giới thiệu và Nền tảng lý thuyết",
       "start": 0,
-      "end": 45,
-      "keywords": ["intro", "welcome", "overview"]
+      "end": 300,
+      "keywords": ["giới thiệu", "lý thuyết", "khái niệm cơ bản"]
     }},
     {{
       "section_id": 2,
-      "title": "Main Topic",
-      "start": 45,
-      "end": 180,
-      "keywords": ["concept", "explanation", "details"]
+      "title": "Ứng dụng thực tế và Case studies",
+      "start": 300,
+      "end": 600,
+      "keywords": ["thực hành", "ví dụ", "ứng dụng"]
     }}
   ]
 }}
 
-IMPORTANT: 
-- Include ALL sections found in the video
-- The last section's end time must match the video's total duration
-- Return valid JSON only, no additional text
+VALIDATION:
+- Total sections should be WELL BELOW the maximum for this video length
+- Each section represents a major content block, not a minor point
+- Last section end = {video_duration}
+- When in doubt, MERGE sections rather than split them
+
+Return ONLY valid JSON, no explanations.
 """
 
 
-def build_outline_prompt(video_transcript: str) -> str:
+def build_outline_prompt(video_transcript: str, video_language: str = "English", video_duration: float = None) -> str:
+    video_duration_minutes = video_duration // 60
+    
     return OUTLINE_PROMPT.format(
-        video_transcript=video_transcript
+        video_transcript=video_transcript,
+        video_language=video_language,
+        video_duration=video_duration,
+        video_duration_minutes=video_duration_minutes
     )
 
 
@@ -76,13 +107,14 @@ Current section transcript:
 {section_text}
 
 Rules:
-- The language used matches the language of the video
+- The language used matches the language of the video is {video_language}
 - Write a concise and clear summary
 - Correct transcription errors silently
 - Avoid repeating previous content
 - Focus only on NEW information in this section
+- The summary MUST be written in {video_language} only, not in any other language.
 
-Return the result strictly in JSON format.
+Return the result strictly in JSON format with language {video_language}.
 """
 
 
@@ -123,21 +155,22 @@ CRITICAL RULES:
 - Do NOT skip any sections from the input.
 - Each takeaway should be a clear, actionable insight or key point (one sentence each).
 - Output MUST be valid JSON matching the schema below.
+- The global summary and all takeaways MUST be written in {video_language} only.
 
 OUTPUT SCHEMA:
 {{
-  "global_summary": "string (2-4 sentences summarizing the entire video)",
+  "global_summary": "string (2-4 sentences summarizing the entire video in {video_language})",
   "section_takeaways": [
     {{
       "section_id": number (copy exactly from input),
-      "title": "string (copy exactly from input)",
+      "title": "string (copy exactly from input) using {video_language}",
       "start": number (copy exactly from input),
       "end": number (copy exactly from input),
       "takeaways": [
-        "string (key point 1)",
-        "string (key point 2)",
-        "string (key point 3, optional)",
-        "string (key point 4, optional)"
+        "string (key point 1 in {video_language})",
+        "string (key point 2 in {video_language})",
+        "string (key point 3, optional in {video_language})",
+        "string (key point 4, optional in {video_language})"
       ]
     }}
   ]
@@ -154,7 +187,7 @@ Now generate the output following the schema exactly.
 
 def build_global_summary_prompt(
     section_summaries: str,
-    video_language: str = "English"
+    video_language: str,
 ) -> str:
     return GLOBAL_SUMMARY_PROMPT.format(
         section_summaries=section_summaries,
