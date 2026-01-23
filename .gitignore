@@ -9,4 +9,14 @@ src/audio_to_text/audio_downloads/
 __pycache__/
 *.pyc
 
+# Environment variables
+.env
+
+src/test_prompt.ipynb
+src/cur_prompt.md
+src/main_case2.ipynb
+src/main_case2.py
+src/main_case1.py
+src/main_case1.ipynb
+
 
