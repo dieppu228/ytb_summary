@@ -10,9 +10,6 @@ from youtube_transcript_api._errors import (
 
 
 
-
-
-
 class FetchStatus(Enum):
     SUCCESS = auto()
     DISABLED = auto()

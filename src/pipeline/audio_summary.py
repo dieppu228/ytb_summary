@@ -2,7 +2,7 @@ from audio_to_text.ytb_dlp import YTBDlpDownloader
 from audio_to_text.whisper_asr import SimpleFasterWhisperASR
 from fetch_transcript.youtube_fetcher import FetchResult, FetchStatus
 import json
-
+import torch
 
 def ytb_video_to_transcript(video_id: str) -> FetchResult:
     """
@@ -28,7 +28,9 @@ def ytb_video_to_transcript(video_id: str) -> FetchResult:
         file_path = download_result["file_path"]
 
         # Step 2: Transcribe audio to text
-        model = SimpleFasterWhisperASR(model_size="small", device="cpu")
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+        print(f"Using device: {device}")
+        model = SimpleFasterWhisperASR(model_size="small", device=device)
         whisper_result = model.transcribe(file_path)
 
         # Step 3: Normalize output to match YouTube fetch format

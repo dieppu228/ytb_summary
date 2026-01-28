@@ -7,10 +7,13 @@ class SimpleFasterWhisperASR:
         self,
         model_size="small",
         device="cpu",
-        compute_type="int8",
+        compute_type=None,  # Auto-detect based on device
         confidence_threshold=0.6
     ):
         self.confidence_threshold = confidence_threshold
+        # Auto-select compute_type: float16 for CUDA, int8 for CPU
+        if compute_type is None:
+            compute_type = "float16" if device == "cuda" else "int8"
         self.model = WhisperModel(
             model_size,
             device=device,

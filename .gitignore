@@ -2,13 +2,13 @@
 # Project-specific
 # =====================
 Prompt_AI.md
-src/cur_prompt.md
+/src/cur_prompt.md
 
 # =====================
 # Audio downloads
 # =====================
-src/audio_downloads/
-src/audio_to_text/audio_downloads/
+/src/audio_downloads/
+/src/audio_to_text/audio_downloads/
 
 # =====================
 # Python cache
@@ -21,7 +21,6 @@ __pycache__/
 # =====================
 # Environment variables
 # =====================
-.env
 
 # =====================
 # Jupyter / notebooks

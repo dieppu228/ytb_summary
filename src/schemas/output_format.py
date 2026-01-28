@@ -4,13 +4,10 @@ from typing import List, TypedDict
 
 
 
-# ==================================================
 # 0. Transcript Fetch Output
-# ==================================================
 
 class TranscriptMeta(BaseModel):
     video_id: str
-    language: str
     language: str
     is_generated: bool
     is_translatable: bool
@@ -33,9 +30,7 @@ class TranscriptOutput(BaseModel):
     )
 
 
-# ==================================================
 # 1. Semantic Outline (Video Segmentation)
-# ==================================================
 
 class SectionOutline(BaseModel):
     section_id: int = Field(
@@ -64,9 +59,7 @@ class OutlineOutput(BaseModel):
     sections: List[SectionOutline]
 
 
-# ==================================================
 # 2. Chunk-level Summary
-# ==================================================
 
 class ChunkSummaryOutput(BaseModel):
     section_id: int
@@ -80,24 +73,18 @@ class ChunkSummaryOutput(BaseModel):
     )
 
 
-# ==================================================
 # 3. Section-level Summary
-# ==================================================
 
 class SectionSummaryOutput(BaseModel):
-    section_id: int
-    title: str
-    start: float
-    end: float
+    """Schema for LLM response - only requires summary field.
+    Other fields (section_id, title, start, end) are added from code."""
     summary: str = Field(
         ...,
         description="Final summary of the entire section"
     )
 
 
-# ==================================================
 # 3.5. Direct Summary (for short videos)
-# ==================================================
 
 class DirectSummaryOutput(BaseModel):
     summary: str = Field(
@@ -106,9 +93,7 @@ class DirectSummaryOutput(BaseModel):
     )
 
 
-# ==================================================
 # 4. Global Video Summary
-# ==================================================
 
 class SectionTakeaway(BaseModel):
     section_id: int
@@ -127,9 +112,7 @@ class GlobalSummaryOutput(BaseModel):
         description="Key takeaways grouped by corresponding sections."
     )
 
-# ==================================================
 # 5. Final Client Response (API Output)
-# ==================================================
 
 class FinalSection(BaseModel):
     section_id: int

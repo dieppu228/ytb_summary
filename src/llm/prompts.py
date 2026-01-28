@@ -1,10 +1,4 @@
-"""
-Prompt templates for YouTube video summarization pipeline (CASE 1)
-"""
-
-# ==================================================
 # 1. Outline / Segmentation Prompt
-# ==================================================
 
 OUTLINE_PROMPT = """
 You are an expert content analyst specializing in high-level video structure analysis.
@@ -90,9 +84,7 @@ def build_outline_prompt(video_transcript: str, video_language: str = "English",
     )
 
 
-# ==================================================
 # 2. Section Summary Prompt
-# ==================================================
 
 SECTION_SUMMARY_PROMPT = """
 You are summarizing one section of a long video.
@@ -130,9 +122,7 @@ def build_section_summary_prompt(
     )
 
 
-# ==================================================
 # 3. Overall Summary Prompt
-# ==================================================
 
 GLOBAL_SUMMARY_PROMPT = """
 You are given a list of video sections in JSON format.
@@ -196,29 +186,41 @@ def build_global_summary_prompt(
 
 
 
-# ==================================================
 # 4. Direct Summary Prompt (for short videos)
-# ==================================================
 
 DIRECT_SUMMARY_PROMPT = """
-You are summarizing a short YouTube video.
+You are an expert content analyst summarizing a short YouTube video.
 
-Language:
-{video_language}
+VIDEO LANGUAGE: {video_language}
 
-Transcript:
+TRANSCRIPT:
 {transcript}
 
-Rules:
-- The language used matches the language of the video
-- Write a clear, concise summary
-- Correct transcription errors silently
-- Capture all main points
+YOUR TASK:
+Create a comprehensive and detailed summary that captures the FULL essence of the video. 
+Since this is a short video, you should cover ALL important information - length is not a concern.
 
-Return the result strictly in JSON format.
+STRUCTURE YOUR SUMMARY WITH:
+1. **Context/Opening**: What is the video about? What's the main topic or purpose?
+2. **Main Points**: Cover ALL key points, arguments, or steps discussed in the video
+3. **Key Details**: Include important examples, data, quotes, or specific information mentioned
+4. **Conclusion/Takeaway**: What's the final message or call-to-action?
+
+RULES:
+- Write in {video_language} ONLY
+- Be thorough and comprehensive - don't skip important details
+- Use clear, well-organized paragraphs
+- Correct any transcription errors silently
+- Preserve the speaker's original intent and tone
+- Include specific numbers, names, or facts mentioned
+- If the video has steps or a process, list them clearly
+
+OUTPUT FORMAT (JSON):
 {{
-  "summary": "Your summary here"
+  "summary": "Your detailed, comprehensive summary here. Use multiple paragraphs if needed for clarity."
 }}
+
+Remember: A good summary should allow someone who hasn't watched the video to fully understand its content.
 """
 
 

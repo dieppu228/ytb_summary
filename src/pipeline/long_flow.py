@@ -1,25 +1,33 @@
-# src/pipeline/long_flow.py
-
 from llm.gemini_client import GeminiClient
 from preprocess.segmenter import TranscriptSegmenter
 from llm.prompts import build_outline_prompt, build_section_summary_prompt, build_global_summary_prompt
 from schemas.output_format import OutlineOutput, SectionSummaryOutput, GlobalSummaryOutput
 import json
 
-def run_long_flow(transcript: str,language: str, video_duration: float = None, **kwargs):
+def run_long_flow(transcript: str, language: str, video_duration: float = None, summary_language: str = None, **kwargs):
+    """
+    Args:
+        transcript: Video transcript text
+        language: Video's original language
+        video_duration: Duration in seconds
+        summary_language: Language for summary output (defaults to video language if not provided)
+    """
+    # Use summary_language if provided, otherwise fallback to video language
+    output_language = summary_language if summary_language else language
 
     # ===== STEP 1: Generate outline =====
     video_transcript = transcript
     prompt = build_outline_prompt(
         video_transcript=transcript,
-        video_language=language,
+        video_language=output_language,
         video_duration=video_duration,
     )
     gemini = GeminiClient()
     response = gemini.models.generate_content(
-        model="models/gemini-2.5-flash-lite",
+        model="models/gemini-2.5-flash",
         contents=prompt,
         config={
+            "temperature": 0.0,
             "response_mime_type": "application/json",
             "response_json_schema": OutlineOutput.model_json_schema(),
         }
@@ -40,12 +48,13 @@ def run_long_flow(transcript: str,language: str, video_duration: float = None, *
         prompt = build_section_summary_prompt(
             section_text=section_text,
             memory=memory,
-            video_language=language
+            video_language=output_language
         )
         response = gemini.models.generate_content(
-        model="models/gemini-2.5-flash-lite",
+        model="models/gemini-2.5-flash",
         contents=prompt,
         config={
+            "temperature": 0.2,
             "response_mime_type": "application/json",
             "response_json_schema": SectionSummaryOutput.model_json_schema(),
         }
@@ -76,12 +85,13 @@ def run_long_flow(transcript: str,language: str, video_duration: float = None, *
     )
     prompt = build_global_summary_prompt(
         section_summaries=section_summaries_text,
-        video_language=language   
+        video_language=output_language   
     )
     response = gemini.models.generate_content(
         model="models/gemini-2.5-flash-lite",
         contents=prompt,
         config={
+            "temperature": 0.2,
             "response_mime_type": "application/json",
             "response_json_schema": GlobalSummaryOutput.model_json_schema(),
         }

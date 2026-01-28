@@ -34,7 +34,12 @@ class TranscriptRouter:
     def __init__(self, threshold: int = LONG_TRANSCRIPT_THRESHOLD):
         self.threshold = threshold
 
-    def route(self, transcript: str, **kwargs):
+    def route(self, transcript: str, summary_language: str = None, **kwargs):
+        """
+        Args:
+            transcript: FetchResult object containing transcript data
+            summary_language: Language for summary output (defaults to video language if not provided)
+        """
         token_count = estimate_tokens(transcript.transcript["text"])
 
         if token_count > self.threshold:
@@ -42,9 +47,11 @@ class TranscriptRouter:
                 transcript=transcript.transcript["text"],
                 language=transcript.transcript["language"],
                 video_duration=transcript.transcript["duration"]["seconds"],
+                summary_language=summary_language,
             )
         else:
             return run_short_flow(
                 transcript=transcript.transcript["text"],
                 language=transcript.transcript["language"],
+                summary_language=summary_language,
             )
