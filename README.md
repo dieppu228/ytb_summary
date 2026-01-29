@@ -1,174 +1,190 @@
 # YouTube Video Summary
 
-Công cụ tự động tóm tắt video YouTube bằng Gemini 2.5 Flash với pipeline đa bước: **outline → segmentation → section summary → global summary**.
+Công cụ tự động tóm tắt video YouTube sử dụng **Gemini 2.5 Flash** với pipeline đa bước thông minh.
+
+## ✨ Features
+
+- ✅ **Smart Segmentation**: Ưu tiên YouTube Chapters nếu có, fallback LLM
+- ✅ **Whisper ASR**: Hỗ trợ video không có transcript (GPU accelerated)
+- ✅ **Multi-language**: Hỗ trợ đa ngôn ngữ (Vietnamese, English, etc.)
+- ✅ **Docker Ready**: Dễ dàng deploy với Docker Compose
+- ✅ **Customizable**: Tùy chọn ngôn ngữ output
+
+## 🚀 Quick Start
+
+### Chạy với Docker (Khuyên dùng)
+
+```bash
+# Pull image từ Docker Hub
+docker pull diep2004123/ytb-summary:latest
+
+# Chạy với video ID
+docker run -e GEMINI_API_KEY="your-key" diep2004123/ytb-summary:latest <video_id>
+
+# Chạy với tùy chọn ngôn ngữ
+docker run -e GEMINI_API_KEY="your-key" diep2004123/ytb-summary:latest <video_id> --summary-language Vietnamese
+```
+
+### Chạy Local
+
+```bash
+# Clone repo
+git clone https://github.com/dieppu228/ytb_summary.git
+cd ytb_summary
+
+# Cài dependencies
+pip install -r requirements.txt
+
+# Tạo file .env
+echo "GEMINI_API_KEY=your_api_key_here" > .env
+
+# Chạy
+python main.py <video_id> --summary-language Vietnamese
+```
 
 ## 📋 Cấu trúc Dự án
 
 ```
 YTB_summary/
-│
+├── main.py                           # Entry point
 ├── src/
-│   ├── config/
-│   │   └── settings.py                    # Cấu hình (model, API keys, timeout...)
-│   │
 │   ├── fetch_transcript/
-│   │   └── youtube_fetcher.py            # Fetch transcript từ YouTube API
+│   │   ├── youtube_fetcher.py        # Fetch transcript từ YouTube
+│   │   └── get_chapters.py           # Fetch YouTube chapters
 │   │
-│   ├── preprocess/
-│   │   ├── cleaner.py                    # Làm sạch transcript
-│   │   ├── normalizer.py                 # Chuẩn hóa text (space, punctuation)
-│   │   └── segmenter.py                  # Chia transcript theo outline
-│   │
-│   ├── llm/
-│   │   ├── gemini_client.py              # Wrapper Gemini API
-│   │   └── prompts.py                    # Prompt templates
-│   │
-│   ├── schemas/
-│   │   ├── output_format.py              # Pydantic schema cho outputs
-│   │   └── summary_result.py             # Schema cho kết quả cuối
-│   │
-│   ├── summarizer/
-│   │   ├── base.py                       # Base class
-│   │   ├── gemini_summarizer.py          # Gemini implementation
-│   │   └── segment_trans.py              # Segment transformation
-│   │
-│   ├── postprocess/
-│   │   └── formatter.py                  # Format output
+│   ├── audio_to_text/
+│   │   ├── whisper_asr.py            # Whisper ASR (GPU)
+│   │   └── ytb_dlp.py                # Download audio từ YouTube
 │   │
 │   ├── pipeline/
-│   │   └── summary_pipeline.py           # Main orchestration
+│   │   ├── router.py                 # Route short/long video
+│   │   ├── video_segmentation.py     # Smart segmentation (chapters/LLM)
+│   │   ├── short_flow.py             # Pipeline cho video ngắn
+│   │   ├── long_flow.py              # Pipeline cho video dài
+│   │   └── audio_summary.py          # ASR fallback pipeline
 │   │
-│   ├── main.py                           # Entry point
-│   └── main.ipynb                        # Jupyter notebook demo
+│   ├── llm/
+│   │   ├── gemini_client.py          # Wrapper Gemini API
+│   │   └── prompts.py                # Prompt templates
+│   │
+│   ├── preprocess/
+│   │   └── segmenter.py              # Chia transcript theo outline
+│   │
+│   └── schemas/
+│       └── output_format.py          # Pydantic schemas
 │
-├── requirements.txt
-├── Prompt_AI.md
-└── README.md
+├── Dockerfile                        # Docker CPU build
+├── Dockerfile.gpu                    # Docker GPU build (CUDA + Whisper)
+├── docker-compose.yml                # Docker Compose config
+└── requirements.txt
 ```
 
 ## 🔄 Pipeline Flow
 
 ```
-1. FETCH TRANSCRIPT
-   ↓
-   YouTubeTranscriptFetcher.fetch(video_id)
-   → Output: video_id, language, duration, text
-   
-2. GENERATE OUTLINE
-   ↓
-   build_outline_prompt(video_transcript)
-   → Output: sections (id, title, start, end, keywords)
-   
-3. SEGMENT TRANSCRIPT
-   ↓
-   TranscriptSegmenter.segment_by_outline(outline.sections)
-   → Output: segmented sections with text content
-   
-4. SUMMARIZE SECTIONS (with Memory)
-   ↓
-   build_section_summary_prompt(section_text, memory, language)
-   → Lặp qua từng section, giữ memory từ section trước
-   → Output: section_summaries (id, title, summary)
-   
-5. GLOBAL SUMMARY
-   ↓
-   build_global_summary_prompt(section_summaries, language)
-   → Output: overall_summary (JSON)
+┌─────────────────────────────────────────────────────────────┐
+│                    VIDEO URL INPUT                          │
+└─────────────────────────┬───────────────────────────────────┘
+                          ▼
+┌─────────────────────────────────────────────────────────────┐
+│              STEP 1: FETCH TRANSCRIPT                       │
+│  ┌─────────────────┐      ┌─────────────────────────────┐   │
+│  │ YouTube API     │ OR   │ Whisper ASR (fallback)      │   │
+│  │ (if available)  │      │ (download audio → transcribe)│   │
+│  └─────────────────┘      └─────────────────────────────┘   │
+└─────────────────────────┬───────────────────────────────────┘
+                          ▼
+┌─────────────────────────────────────────────────────────────┐
+│              STEP 2: ROUTE (Short/Long)                     │
+│  Token count < 1500 → Short Flow (direct summary)           │
+│  Token count > 1500 → Long Flow (multi-step)                │
+└─────────────────────────┬───────────────────────────────────┘
+                          ▼
+┌─────────────────────────────────────────────────────────────┐
+│              STEP 3: VIDEO SEGMENTATION                     │
+│  ┌─────────────────┐      ┌─────────────────────────────┐   │
+│  │ YouTube Chapters│ OR   │ LLM Outline (fallback)      │   │
+│  │ (if available)  │      │ (Gemini generates outline)  │   │
+│  └─────────────────┘      └─────────────────────────────┘   │
+└─────────────────────────┬───────────────────────────────────┘
+                          ▼
+┌─────────────────────────────────────────────────────────────┐
+│              STEP 4: SUMMARIZE SECTIONS                     │
+│  For each section: summarize with memory context            │
+└─────────────────────────┬───────────────────────────────────┘
+                          ▼
+┌─────────────────────────────────────────────────────────────┐
+│              STEP 5: GLOBAL SUMMARY                         │
+│  Combine all section summaries → final output               │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-## 🚀 Cách Dùng
+## 🐳 Docker
 
-### Cài đặt Dependencies
+### Build từ source
 
 ```bash
-pip install -r requirements.txt
+# Build CPU version
+docker-compose build ytb-summary
+
+# Build GPU version (CUDA + Whisper)
+docker-compose build ytb-summary-gpu
 ```
 
-### Chạy Demo (Jupyter Notebook)
+### Run
 
 ```bash
-jupyter notebook src/main.ipynb
+# CPU version
+docker-compose run ytb-summary <video_id> --summary-language Vietnamese
+
+# GPU version
+docker-compose --profile gpu run ytb-summary-gpu <video_id> --summary-language Vietnamese
 ```
 
-Notebook gồm 5 cell tương ứng với 5 bước pipeline:
-1. **Fetch Transcript**: Lấy transcript từ YouTube
-2. **Generate Outline**: Chia video thành các section
-3. **Segment Transcript**: Phân đoạn transcript theo outline
-4. **Summarize Sections**: Tóm tắt từng section (có memory)
-5. **Global Summary**: Tóm tắt toàn bộ video
+## 🔑 Environment Variables
 
-### Chạy Script (main.py)
-
-```bash
-python src/main.py
-```
-
-## 📝 Prompts
-
-### 1. Outline Prompt
-- **Mục đích**: Chia video thành các section có chủ đề
-- **Input**: Full transcript
-- **Output**: JSON với sections (id, title, start, end, keywords)
-
-### 2. Section Summary Prompt
-- **Mục đích**: Tóm tắt từng section
-- **Input**: Section text, previous summary (memory), language
-- **Output**: JSON với summary của section
-
-### 3. Global Summary Prompt
-- **Mục đích**: Tóm tắt toàn bộ video
-- **Input**: Tất cả section summaries, language
-- **Output**: JSON với overall_summary
-
-## 🔑 Mẫu Environment
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `GEMINI_API_KEY` | ✅ | Google Gemini API key |
 
 Tạo file `.env`:
-
 ```
 GEMINI_API_KEY=your_api_key_here
-YOUTUBE_API_KEY=your_youtube_api_key_here
+```
+
+## 📝 CLI Options
+
+```bash
+python main.py <video_id> [OPTIONS]
+
+Options:
+  --summary-language, -l    Ngôn ngữ output (Vietnamese, English, etc.)
+  --output, -o              Lưu kết quả ra file JSON
+  --help                    Hiển thị help
 ```
 
 ## 📦 Dependencies
 
-- `google-generativeai`: Gemini API
+- `google-genai`: Gemini API client
 - `youtube-transcript-api`: Fetch YouTube transcripts
+- `yt-dlp`: Download YouTube audio
+- `openai-whisper`: Speech-to-text (ASR)
 - `pydantic`: Data validation
-- `python-dotenv`: Load environment variables
-
-## ✨ Features
-
-- ✅ Tự động fetch transcript từ YouTube
-- ✅ Phân tích outline (outline) video tự động
-- ✅ Segment transcript theo outline
-- ✅ Tóm tắt từng section với context memory
-- ✅ Sinh global summary từ section summaries
-- ✅ Support đa ngôn ngữ (tiếng Anh, Tiếng Việt, etc.)
-- ✅ JSON schema validation với Pydantic
+- `torch`: PyTorch (for Whisper GPU)
 
 ## 🛠️ Development
 
-Để test từng module riêng lẻ:
+```bash
+# Test fetch transcript
+python -c "from src.fetch_transcript.youtube_fetcher import YouTubeTranscriptFetcher; print(YouTubeTranscriptFetcher().fetch('dQw4w9WgXcQ'))"
 
-```python
-# Test fetch
-from fetch_transcript.youtube_fetcher import YouTubeTranscriptFetcher
-fetcher = YouTubeTranscriptFetcher()
-result = fetcher.fetch("video_id")
+# Test với video có chapters
+python main.py S4hYyLebsAw --summary-language Vietnamese
 
-# Test outline
-from llm.prompts import build_outline_prompt
-from llm.gemini_client import GeminiClient
-prompt = build_outline_prompt(transcript)
-# ... gọi Gemini
-
-# Test section summary
-from llm.prompts import build_section_summary_prompt
-prompt = build_section_summary_prompt(section_text, memory, language)
-# ... gọi Gemini
-
-# Test global summary
-from llm.prompts import build_global_summary_prompt
-prompt = build_global_summary_prompt(section_summaries, language)
-# ... gọi Gemini
+# Test với video không có transcript (cần Whisper)
+python main.py 725WlG1idPc --summary-language Vietnamese
 ```
+
+## 📄 License
+
+MIT License
