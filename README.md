@@ -1,4 +1,4 @@
-# YouTube Video Summary
+# YouTube Video Summary - Dev By KhacDiep
 
 An automatic YouTube video summarization tool using **Gemini 2.5 Flash** with intelligent multi-step pipeline.
 
