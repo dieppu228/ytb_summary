@@ -1,74 +1,74 @@
 # YouTube Video Summary
 
-Công cụ tự động tóm tắt video YouTube sử dụng **Gemini 2.5 Flash** với pipeline đa bước thông minh.
+An automatic YouTube video summarization tool using **Gemini 2.5 Flash** with intelligent multi-step pipeline.
 
 ## ✨ Features
 
-- ✅ **Smart Segmentation**: Ưu tiên YouTube Chapters nếu có, fallback LLM
-- ✅ **Whisper ASR**: Hỗ trợ video không có transcript (GPU accelerated)
-- ✅ **Multi-language**: Hỗ trợ đa ngôn ngữ (Vietnamese, English, etc.)
-- ✅ **Docker Ready**: Dễ dàng deploy với Docker Compose
-- ✅ **Customizable**: Tùy chọn ngôn ngữ output
+- ✅ **Smart Segmentation**: Prioritizes YouTube Chapters if available, falls back to LLM
+- ✅ **Whisper ASR**: Supports videos without transcripts (GPU accelerated)
+- ✅ **Multi-language**: Supports multiple languages (Vietnamese, English, etc.)
+- ✅ **Docker Ready**: Easy deployment with Docker Compose
+- ✅ **Customizable**: Choose output language
 
 ## 🚀 Quick Start
 
-### Chạy với Docker (Khuyên dùng)
+### Run with Docker (Recommended)
 
 ```bash
-# Pull image từ Docker Hub
+# Pull image from Docker Hub
 docker pull diep2004123/ytb-summary:latest
 
-# Chạy với video ID
+# Run with video ID
 docker run -e GEMINI_API_KEY="your-key" diep2004123/ytb-summary:latest <video_id>
 
-# Chạy với tùy chọn ngôn ngữ
+# Run with language option
 docker run -e GEMINI_API_KEY="your-key" diep2004123/ytb-summary:latest <video_id> --summary-language Vietnamese
 ```
 
-### Chạy Local
+### Run Locally
 
 ```bash
 # Clone repo
 git clone https://github.com/dieppu228/ytb_summary.git
 cd ytb_summary
 
-# Cài dependencies
+# Install dependencies
 pip install -r requirements.txt
 
-# Tạo file .env
+# Create .env file
 echo "GEMINI_API_KEY=your_api_key_here" > .env
 
-# Chạy
+# Run
 python main.py <video_id> --summary-language Vietnamese
 ```
 
-## 📋 Cấu trúc Dự án
+## 📋 Project Structure
 
 ```
 YTB_summary/
 ├── main.py                           # Entry point
 ├── src/
 │   ├── fetch_transcript/
-│   │   ├── youtube_fetcher.py        # Fetch transcript từ YouTube
+│   │   ├── youtube_fetcher.py        # Fetch transcript from YouTube
 │   │   └── get_chapters.py           # Fetch YouTube chapters
 │   │
 │   ├── audio_to_text/
 │   │   ├── whisper_asr.py            # Whisper ASR (GPU)
-│   │   └── ytb_dlp.py                # Download audio từ YouTube
+│   │   └── ytb_dlp.py                # Download audio from YouTube
 │   │
 │   ├── pipeline/
 │   │   ├── router.py                 # Route short/long video
 │   │   ├── video_segmentation.py     # Smart segmentation (chapters/LLM)
-│   │   ├── short_flow.py             # Pipeline cho video ngắn
-│   │   ├── long_flow.py              # Pipeline cho video dài
+│   │   ├── short_flow.py             # Pipeline for short videos
+│   │   ├── long_flow.py              # Pipeline for long videos
 │   │   └── audio_summary.py          # ASR fallback pipeline
 │   │
 │   ├── llm/
-│   │   ├── gemini_client.py          # Wrapper Gemini API
+│   │   ├── gemini_client.py          # Gemini API wrapper
 │   │   └── prompts.py                # Prompt templates
 │   │
 │   ├── preprocess/
-│   │   └── segmenter.py              # Chia transcript theo outline
+│   │   └── segmenter.py              # Segment transcript by outline
 │   │
 │   └── schemas/
 │       └── output_format.py          # Pydantic schemas
@@ -121,7 +121,7 @@ YTB_summary/
 
 ## 🐳 Docker
 
-### Build từ source
+### Build from Source
 
 ```bash
 # Build CPU version
@@ -143,11 +143,12 @@ docker-compose --profile gpu run ytb-summary-gpu <video_id> --summary-language V
 
 ## 🔑 Environment Variables
 
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `GEMINI_API_KEY` | ✅ | Google Gemini API key |
+| Variable         | Required | Description           |
+| ---------------- | -------- | --------------------- |
+| `GEMINI_API_KEY` | ✅       | Google Gemini API key |
 
-Tạo file `.env`:
+Create `.env` file:
+
 ```
 GEMINI_API_KEY=your_api_key_here
 ```
@@ -158,9 +159,9 @@ GEMINI_API_KEY=your_api_key_here
 python main.py <video_id> [OPTIONS]
 
 Options:
-  --summary-language, -l    Ngôn ngữ output (Vietnamese, English, etc.)
-  --output, -o              Lưu kết quả ra file JSON
-  --help                    Hiển thị help
+  --summary-language, -l    Output language (Vietnamese, English, etc.)
+  --output, -o              Save results to JSON file
+  --help                    Show help
 ```
 
 ## 📦 Dependencies
@@ -178,10 +179,10 @@ Options:
 # Test fetch transcript
 python -c "from src.fetch_transcript.youtube_fetcher import YouTubeTranscriptFetcher; print(YouTubeTranscriptFetcher().fetch('dQw4w9WgXcQ'))"
 
-# Test với video có chapters
+# Test with video that has chapters
 python main.py S4hYyLebsAw --summary-language Vietnamese
 
-# Test với video không có transcript (cần Whisper)
+# Test with video without transcript (requires Whisper)
 python main.py 725WlG1idPc --summary-language Vietnamese
 ```
 
