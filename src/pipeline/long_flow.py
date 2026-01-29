@@ -1,10 +1,11 @@
 from llm.gemini_client import GeminiClient
 from preprocess.segmenter import TranscriptSegmenter
 from llm.prompts import build_outline_prompt, build_section_summary_prompt, build_global_summary_prompt
+from pipeline.video_segmentation import video_segmentation
 from schemas.output_format import OutlineOutput, SectionSummaryOutput, GlobalSummaryOutput
 import json
 
-def run_long_flow(transcript: str, language: str, video_duration: float = None, summary_language: str = None, **kwargs):
+def run_long_flow(video_id: str, transcript: str, language: str, video_duration: float = None, summary_language: str = None, **kwargs):
     """
     Args:
         transcript: Video transcript text
@@ -12,33 +13,18 @@ def run_long_flow(transcript: str, language: str, video_duration: float = None, 
         video_duration: Duration in seconds
         summary_language: Language for summary output (defaults to video language if not provided)
     """
+
     # Use summary_language if provided, otherwise fallback to video language
     output_language = summary_language if summary_language else language
 
     # ===== STEP 1: Generate outline =====
-    video_transcript = transcript
-    prompt = build_outline_prompt(
-        video_transcript=transcript,
-        video_language=output_language,
-        video_duration=video_duration,
-    )
-    gemini = GeminiClient()
-    response = gemini.models.generate_content(
-        model="models/gemini-2.5-flash",
-        contents=prompt,
-        config={
-            "temperature": 0.0,
-            "response_mime_type": "application/json",
-            "response_json_schema": OutlineOutput.model_json_schema(),
-        }
-    )
-    outline = OutlineOutput.model_validate_json(response.text)
+    outline = video_segmentation(video_id, transcript, language, video_duration, summary_language)
 
     # ===== STEP 2: Segment transcript according to outline =====
-    segmenter = TranscriptSegmenter(video_transcript)
+    segmenter = TranscriptSegmenter(transcript)
     outlined_sections = segmenter.segment_by_outline(outline.sections)
-    
     # ===== STEP 3: Summarize each section with memory =====
+    gemini = GeminiClient()
     memory = ""
     section_summaries = []
 
@@ -75,6 +61,7 @@ def run_long_flow(transcript: str, language: str, video_duration: float = None, 
         # Update memory
         memory = summary_obj.summary
     
+    print(json.dumps(section_summaries, indent=2, ensure_ascii=False))
 
     # ===== STEP 4: Global Summary =====
     section_summaries_text = "" 

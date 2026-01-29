@@ -8,6 +8,8 @@ Video Duration: {video_duration} seconds (~{video_duration_minutes} minutes)
 
 Given a YouTube transcript with timestamps, identify only the MOST SIGNIFICANT topical sections.
 
+Before creating sections, think step by step about the video's overall structure and flow.
+
 Transcript:
 {video_transcript}
 
