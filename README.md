@@ -186,6 +186,4 @@ python main.py S4hYyLebsAw --summary-language Vietnamese
 python main.py 725WlG1idPc --summary-language Vietnamese
 ```
 
-## 📄 License
 
-MIT License
