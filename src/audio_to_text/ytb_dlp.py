@@ -61,14 +61,24 @@ class YTBDlpDownloader:
             ydl_opts = {
                 "format": "bestaudio/best",
                 "outtmpl": outtmpl,
+                "extractor_args": {
+                    "youtube": {
+                        "player_client": ["android"]
+                    }
+                },
                 "postprocessors": [{
                     "key": "FFmpegExtractAudio",
                     "preferredcodec": self.audio_format,
                     "preferredquality": self.audio_quality,
                 }],
+                "retries": 5,
+                "socket_timeout": 15,
                 "quiet": True,
-                "no_warnings": True
+                "no_warnings": True,
+                "noplaylist": True
             }
+
+
 
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 ydl.download([url])

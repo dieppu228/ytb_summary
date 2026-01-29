@@ -61,7 +61,6 @@ def run_long_flow(video_id: str, transcript: str, language: str, video_duration:
         # Update memory
         memory = summary_obj.summary
     
-    print(json.dumps(section_summaries, indent=2, ensure_ascii=False))
 
     # ===== STEP 4: Global Summary =====
     section_summaries_text = "" 

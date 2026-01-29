@@ -32,7 +32,12 @@ def ytb_video_to_transcript(video_id: str) -> FetchResult:
         print(f"Using device: {device}")
         model = SimpleFasterWhisperASR(model_size="small", device=device)
         whisper_result = model.transcribe(file_path)
-
+        
+        del model
+        if device == "cuda":
+            torch.cuda.empty_cache()
+        
+        print("Transcription done, building result...")
         # Step 3: Normalize output to match YouTube fetch format
         payload = {
             "video_id": video_id,

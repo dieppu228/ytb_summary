@@ -6,7 +6,7 @@ class SimpleFasterWhisperASR:
     def __init__(
         self,
         model_size="small",
-        device="cpu",
+        device="cuda",
         compute_type=None,  # Auto-detect based on device
         confidence_threshold=0.6
     ):
