@@ -34,3 +34,5 @@ src/*.ipynb
 # =====================
 src/main_case1.py
 src/main_case2.py
+audio_downloads
+test_prompt.ipynb

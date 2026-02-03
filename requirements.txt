@@ -1,5 +1,6 @@
 # Core Dependencies
 python-dotenv==1.1.1
+gradio>=4.0.0
 
 # LLM & API
 google-genai>=1.0.0

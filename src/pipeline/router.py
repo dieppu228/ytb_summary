@@ -3,7 +3,7 @@ from pipeline.long_flow import run_long_flow
 from pipeline.audio_summary import ytb_video_to_transcript
 from utils.token_counter import estimate_tokens
 from fetch_transcript.youtube_fetcher import YouTubeTranscriptFetcher
-
+from llm.get_metadata import get_video_metadata
 
 
 LONG_TRANSCRIPT_THRESHOLD = 1500
@@ -15,7 +15,13 @@ class VideoToTextNode:
         self.fetcher = YouTubeTranscriptFetcher(languages=languages)
 
     def run(self, video_id: str):
+        # Fetch transcript
         fetch_result = self.fetcher.fetch(video_id)
+        
+        # Fetch video metadata (title, description, etc.)
+        metadata = get_video_metadata(video_id)
+        fetch_result.metadata = metadata
+        
         if fetch_result.ok:
             print(fetch_result.transcript["language"])
             return fetch_result
@@ -26,7 +32,8 @@ class VideoToTextNode:
         )
 
         asr_result = ytb_video_to_transcript(video_id)
-
+        asr_result.metadata = metadata  # Also attach metadata to ASR result
+        
         return asr_result
 
 

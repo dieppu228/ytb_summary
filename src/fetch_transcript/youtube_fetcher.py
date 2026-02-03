@@ -21,7 +21,8 @@ class FetchStatus(Enum):
 class FetchResult:
     ok: bool
     status: FetchStatus
-    transcript: str | None = None
+    transcript: dict | None = None
+    metadata: dict | None = None  # Video metadata (title, description, etc.)
     error: str | None = None
 
 

@@ -199,30 +199,31 @@ TRANSCRIPT:
 {transcript}
 
 YOUR TASK:
-Create a comprehensive and detailed summary that captures the FULL essence of the video. 
-Since this is a short video, you should cover ALL important information - length is not a concern.
+Create a summary that is PROPORTIONAL to the video content length.
 
-STRUCTURE YOUR SUMMARY WITH:
-1. **Context/Opening**: What is the video about? What's the main topic or purpose?
-2. **Main Points**: Cover ALL key points, arguments, or steps discussed in the video
-3. **Key Details**: Include important examples, data, quotes, or specific information mentioned
-4. **Conclusion/Takeaway**: What's the final message or call-to-action?
+IMPORTANT LENGTH GUIDELINES:
+- For music videos, lyrics, or very short content (1-3 min): Write 3-5 sentences MAX. Just describe what the song/content is about.
+- For short explanatory videos (3-5 min): Write 5-7 sentences covering the main point.
+- For medium content (5-10 min): Write a paragraph (8-10 sentences) with key details.
+
+DETECT CONTENT TYPE:
+- If the transcript contains mostly lyrics, repetitive phrases, or musical content → Keep summary VERY brief (1-2 sentences describing the song's theme/mood)
+- If the transcript is educational/informational → Include main points but stay concise
 
 RULES:
 - Write in {video_language} ONLY
-- Be thorough and comprehensive - don't skip important details
-- Use clear, well-organized paragraphs
+- Summary should NEVER be longer than the original transcript
+- For music: Just describe the theme, mood, and what the song is about
+- For tutorials: Focus on the main takeaway, not every detail
 - Correct any transcription errors silently
 - Preserve the speaker's original intent and tone
-- Include specific numbers, names, or facts mentioned
-- If the video has steps or a process, list them clearly
 
 OUTPUT FORMAT (JSON):
 {{
-  "summary": "Your detailed, comprehensive summary here. Use multiple paragraphs if needed for clarity."
+  "summary": "Your concise summary here. Keep it proportional to the content length."
 }}
 
-Remember: A good summary should allow someone who hasn't watched the video to fully understand its content.
+Remember: A good summary is SHORTER than the original, not longer.
 """
 
 
